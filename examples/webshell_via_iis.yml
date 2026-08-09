@@ -1,0 +1,28 @@
+title: Web Shell Creation via IIS Worker Process
+id: 8a9f0a2e-11f1-4c11-9e21-example00003
+status: experimental
+description: >
+  Detects the IIS worker process writing a script file to a web-accessible
+  directory, a common indicator of web shell deployment.
+references:
+  - https://attack.mitre.org/techniques/T1505/003/
+author: Kyle Main
+date: 2026/08/09
+tags:
+  - attack.persistence
+  - attack.t1505.003
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection_process:
+    Image|endswith: '\w3wp.exe'
+  selection_target:
+    TargetFilename|endswith:
+      - '.aspx'
+      - '.asp'
+      - '.php'
+  filter_known_good:
+    TargetFilename|contains: '\App_Data\'
+  condition: selection_process and selection_target and not filter_known_good
+level: high

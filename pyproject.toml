@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sigmux"
+version = "0.1.0"
+description = "Convert Sigma detection rules into multiple SIEM query languages (Splunk SPL, Elasticsearch Query DSL, Microsoft Sentinel KQL)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Kyle Main"}]
+keywords = ["sigma", "siem", "detection-engineering", "splunk", "elasticsearch", "sentinel", "kql", "security"]
+dependencies = [
+    "PyYAML>=6.0",
+    "click>=8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/kylemain/sigmux"
+
+[project.scripts]
+sigmux = "sigmux.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sigmux*"]
