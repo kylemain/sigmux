@@ -10,6 +10,16 @@ import click
 from .backends import REGISTRY, get_backend
 from .rule import SigmaRule
 
+_EXTENSIONS = {
+    "splunk": "spl",
+    "elasticsearch": "json",
+    "sentinel": "kql",
+}
+
+
+def _extension_for(target_name: str) -> str:
+    return _EXTENSIONS.get(target_name, "txt")
+
 
 def _load_rule(path: Path) -> SigmaRule:
     return SigmaRule.from_yaml(path.read_text(encoding="utf-8"))
@@ -52,7 +62,8 @@ def targets():
     "out_dir",
     type=click.Path(path_type=Path),
     default=None,
-    help="Write each conversion to <out>/<rule>.<target>.txt instead of stdout.",
+    help="Write each conversion to <out>/<rule>.<target>.<ext> instead of stdout "
+    "(.spl for Splunk, .json for Elasticsearch, .kql for Sentinel).",
 )
 def convert(path: Path, target_names: Tuple[str, ...], out_dir: Optional[Path]):
     """Convert one Sigma rule file, or every rule in a directory, into one
@@ -81,7 +92,8 @@ def convert(path: Path, target_names: Tuple[str, ...], out_dir: Optional[Path]):
                 continue
 
             if out_dir:
-                out_path = out_dir / f"{rule_path.stem}.{backend.name}.txt"
+                ext = _extension_for(backend.name)
+                out_path = out_dir / f"{rule_path.stem}.{backend.name}.{ext}"
                 out_path.write_text(rendered + "\n", encoding="utf-8")
                 click.echo(f"wrote {out_path}")
             else:

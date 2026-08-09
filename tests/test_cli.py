@@ -40,8 +40,19 @@ class TestCli(unittest.TestCase):
                 ],
             )
             self.assertEqual(result.exit_code, 0, result.output)
-            written = sorted(Path("out").glob("*.splunk.txt"))
+            written = sorted(Path("out").glob("*.splunk.spl"))
             self.assertEqual(len(written), 4)
+
+    def test_convert_directory_writes_correct_extensions_per_target(self):
+        with self.runner.isolated_filesystem():
+            result = self.runner.invoke(
+                main,
+                ["convert", str(EXAMPLES_DIR), "--out", "out"],
+            )
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(len(list(Path("out").glob("*.splunk.spl"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.elasticsearch.json"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.sentinel.kql"))), 4)
 
     def test_unknown_target_reported(self):
         rule_path = EXAMPLES_DIR / "mimikatz_execution.yml"
