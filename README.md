@@ -39,6 +39,8 @@ It's a generalized, from-scratch build — not a wrapper around an existing rule
 ```bash
 git clone https://github.com/kylemain/sigmux
 cd sigmux
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
 ```
 
