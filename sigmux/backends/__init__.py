@@ -1,13 +1,21 @@
 """Backend registry: maps a target name to its converter implementation."""
 from .base import Backend
+from .chronicle import ChronicleBackend
 from .elasticsearch import ElasticsearchBackend
+from .logscale import LogScaleBackend
+from .qradar import QRadarBackend
 from .sentinel import SentinelBackend
 from .splunk import SplunkBackend
+from .sumologic import SumoLogicBackend
 
 REGISTRY = {
     "splunk": SplunkBackend(),
     "elasticsearch": ElasticsearchBackend(),
     "sentinel": SentinelBackend(),
+    "logscale": LogScaleBackend(),
+    "qradar": QRadarBackend(),
+    "chronicle": ChronicleBackend(),
+    "sumologic": SumoLogicBackend(),
 }
 
 

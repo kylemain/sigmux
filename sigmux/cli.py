@@ -6,19 +6,48 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import click
+from rich.console import Console
+from rich.panel import Panel
+from rich.syntax import Syntax
+from rich.table import Table
 
 from .backends import REGISTRY, get_backend
 from .rule import SigmaRule
 
-_EXTENSIONS = {
-    "splunk": "spl",
-    "elasticsearch": "json",
-    "sentinel": "kql",
+console = Console()
+err_console = Console(stderr=True)
+
+# Display metadata for the CLI only -- purely cosmetic. A new backend works
+# fully (conversion, file output, `targets` listing) with zero entries here;
+# omitting one just falls back to a plain label/extension/color, so adding a
+# SIEM target still only means writing one new backends/*.py file.
+_TARGET_INFO = {
+    "splunk": {"label": "Splunk SPL", "ext": "spl", "color": "orange3", "lexer": "text"},
+    "elasticsearch": {"label": "Elasticsearch Query DSL", "ext": "json", "color": "gold3", "lexer": "json"},
+    "sentinel": {"label": "Microsoft Sentinel (KQL)", "ext": "kql", "color": "deep_sky_blue1", "lexer": "kql"},
+    "logscale": {"label": "CrowdStrike Falcon LogScale (LQL)", "ext": "lql", "color": "magenta1", "lexer": "text"},
+    "qradar": {"label": "IBM QRadar (AQL)", "ext": "aql", "color": "green3", "lexer": "sql"},
+    "chronicle": {"label": "Google Chronicle (YARA-L 2.0)", "ext": "yaral", "color": "cyan1", "lexer": "yara"},
+    "sumologic": {"label": "Sumo Logic search query", "ext": "sumo", "color": "red3", "lexer": "text"},
 }
 
 
-def _extension_for(target_name: str) -> str:
-    return _EXTENSIONS.get(target_name, "txt")
+def _info_for(target_name: str) -> dict:
+    info = _TARGET_INFO.get(target_name, {})
+    return {
+        "label": info.get("label", target_name.title()),
+        "ext": info.get("ext", "txt"),
+        "color": info.get("color", "white"),
+        "lexer": info.get("lexer", "text"),
+    }
+
+
+def _syntax_for(code: str, target_name: str) -> Syntax:
+    lexer = _info_for(target_name)["lexer"]
+    try:
+        return Syntax(code, lexer, theme="ansi_dark", word_wrap=True, background_color="default")
+    except Exception:  # noqa: BLE001 - any lexer/theme hiccup, just fall back
+        return Syntax(code, "text", theme="ansi_dark", word_wrap=True, background_color="default")
 
 
 def _load_rule(path: Path) -> SigmaRule:
@@ -42,8 +71,16 @@ def main():
 @main.command()
 def targets():
     """List supported conversion targets."""
+    table = Table(title="sigmux conversion targets", header_style="bold")
+    table.add_column("Target", style="bold")
+    table.add_column("Query language")
+    table.add_column("Output ext", justify="center")
+
     for name in sorted(REGISTRY):
-        click.echo(name)
+        info = _info_for(name)
+        table.add_row(f"[{info['color']}]{name}[/{info['color']}]", info["label"], f".{info['ext']}")
+
+    console.print(table)
 
 
 @main.command()
@@ -63,7 +100,7 @@ def targets():
     type=click.Path(path_type=Path),
     default=None,
     help="Write each conversion to <out>/<rule>.<target>.<ext> instead of stdout "
-    "(.spl for Splunk, .json for Elasticsearch, .kql for Sentinel).",
+    "(.spl, .json, .kql, .lql, .aql, .yaral, .sumo depending on target).",
 )
 def convert(path: Path, target_names: Tuple[str, ...], out_dir: Optional[Path]):
     """Convert one Sigma rule file, or every rule in a directory, into one
@@ -73,34 +110,46 @@ def convert(path: Path, target_names: Tuple[str, ...], out_dir: Optional[Path]):
         out_dir.mkdir(parents=True, exist_ok=True)
 
     exit_code = 0
+    rule_count = 0
+    ok_count = 0
+    error_count = 0
+
     for rule_path in _iter_rule_files(path):
         try:
             rule = _load_rule(rule_path)
         except Exception as exc:  # noqa: BLE001 - surfaced directly to the user
-            click.secho(f"[skip] {rule_path}: {exc}", fg="yellow", err=True)
+            err_console.print(f"[bold yellow]⚠ skip[/bold yellow] {rule_path}: {exc}")
             exit_code = 1
+            error_count += 1
             continue
 
+        rule_count += 1
         for backend in backends:
+            info = _info_for(backend.name)
             try:
                 rendered = backend.render(rule)
             except Exception as exc:  # noqa: BLE001
-                click.secho(
-                    f"[error] {rule_path} -> {backend.name}: {exc}", fg="red", err=True
+                err_console.print(
+                    f"[bold red]✗ error[/bold red] {rule_path} -> {backend.name}: {exc}"
                 )
                 exit_code = 1
+                error_count += 1
                 continue
 
+            ok_count += 1
             if out_dir:
-                ext = _extension_for(backend.name)
-                out_path = out_dir / f"{rule_path.stem}.{backend.name}.{ext}"
+                out_path = out_dir / f"{rule_path.stem}.{backend.name}.{info['ext']}"
                 out_path.write_text(rendered + "\n", encoding="utf-8")
-                click.echo(f"wrote {out_path}")
+                console.print(f"[green]✓[/green] wrote [bold]{out_path}[/bold]")
             else:
-                click.secho(f"--- {rule.title} :: {backend.name} ---", fg="cyan", bold=True)
-                click.echo(rendered)
-                click.echo()
+                title = f"[bold]{rule.title}[/bold] :: [{info['color']}]{backend.name}[/{info['color']}] ({info['label']})"
+                console.print(Panel(_syntax_for(rendered, backend.name), title=title, title_align="left", border_style=info["color"]))
 
+    summary_style = "bold green" if error_count == 0 else "bold yellow"
+    console.print(
+        f"[{summary_style}]{ok_count} conversion(s) across {rule_count} rule(s), "
+        f"{error_count} error(s)[/{summary_style}]"
+    )
     sys.exit(exit_code)
 
 

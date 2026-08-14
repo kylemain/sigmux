@@ -15,7 +15,7 @@ class TestCli(unittest.TestCase):
     def test_targets_lists_all_backends(self):
         result = self.runner.invoke(main, ["targets"])
         self.assertEqual(result.exit_code, 0)
-        for name in ("elasticsearch", "sentinel", "splunk"):
+        for name in ("elasticsearch", "sentinel", "splunk", "logscale", "qradar", "chronicle", "sumologic"):
             self.assertIn(name, result.output)
 
     def test_convert_single_rule_all_targets(self):
@@ -25,6 +25,10 @@ class TestCli(unittest.TestCase):
         self.assertIn("splunk", result.output)
         self.assertIn("elasticsearch", result.output)
         self.assertIn("sentinel", result.output)
+        self.assertIn("logscale", result.output)
+        self.assertIn("qradar", result.output)
+        self.assertIn("chronicle", result.output)
+        self.assertIn("sumologic", result.output)
 
     def test_convert_directory_writes_files(self):
         with self.runner.isolated_filesystem():
@@ -53,6 +57,10 @@ class TestCli(unittest.TestCase):
             self.assertEqual(len(list(Path("out").glob("*.splunk.spl"))), 4)
             self.assertEqual(len(list(Path("out").glob("*.elasticsearch.json"))), 4)
             self.assertEqual(len(list(Path("out").glob("*.sentinel.kql"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.logscale.lql"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.qradar.aql"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.chronicle.yaral"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.sumologic.sumo"))), 4)
 
     def test_unknown_target_reported(self):
         rule_path = EXAMPLES_DIR / "mimikatz_execution.yml"
