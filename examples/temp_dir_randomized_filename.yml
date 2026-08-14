@@ -1,0 +1,28 @@
+title: Suspicious Process with Randomized Short Filename in Temp
+id: 8a9f0a2e-11f1-4c11-9e21-example00008
+status: experimental
+description: >
+  Detects a process executing from a temp directory with a short,
+  randomly-generated-looking filename, a common trait of dropped payloads
+  and renamed offensive tooling.
+references:
+  - https://attack.mitre.org/techniques/T1036/003/
+author: Kyle Main
+date: 2026/08/14
+tags:
+  - attack.defense_evasion
+  - attack.t1036.003
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_path:
+    Image|contains:
+      - '\AppData\Local\Temp\'
+      - '\Windows\Temp\'
+  selection_name:
+    Image|re: '[\\](?:[a-f0-9]{6,10}|[A-Za-z]{1,3}\d{2,4})\.exe$'
+  condition: selection_path and selection_name
+falsepositives:
+  - Some legitimate installers and auto-update helpers use short temp filenames
+level: medium

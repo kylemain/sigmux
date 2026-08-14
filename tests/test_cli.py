@@ -45,7 +45,7 @@ class TestCli(unittest.TestCase):
             )
             self.assertEqual(result.exit_code, 0, result.output)
             written = sorted(Path("out").glob("*.splunk.spl"))
-            self.assertEqual(len(written), 4)
+            self.assertEqual(len(written), 9)
 
     def test_convert_directory_writes_correct_extensions_per_target(self):
         with self.runner.isolated_filesystem():
@@ -54,13 +54,13 @@ class TestCli(unittest.TestCase):
                 ["convert", str(EXAMPLES_DIR), "--out", "out"],
             )
             self.assertEqual(result.exit_code, 0, result.output)
-            self.assertEqual(len(list(Path("out").glob("*.splunk.spl"))), 4)
-            self.assertEqual(len(list(Path("out").glob("*.elasticsearch.json"))), 4)
-            self.assertEqual(len(list(Path("out").glob("*.sentinel.kql"))), 4)
-            self.assertEqual(len(list(Path("out").glob("*.logscale.lql"))), 4)
-            self.assertEqual(len(list(Path("out").glob("*.qradar.aql"))), 4)
-            self.assertEqual(len(list(Path("out").glob("*.chronicle.yaral"))), 4)
-            self.assertEqual(len(list(Path("out").glob("*.sumologic.sumo"))), 4)
+            self.assertEqual(len(list(Path("out").glob("*.splunk.spl"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.elasticsearch.json"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.sentinel.kql"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.logscale.lql"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.qradar.aql"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.chronicle.yaral"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.sumologic.sumo"))), 9)
 
     def test_unknown_target_reported(self):
         rule_path = EXAMPLES_DIR / "mimikatz_execution.yml"
