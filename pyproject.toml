@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigmux"
-version = "0.3.0"
+version = "0.3.1"
 description = "Convert Sigma detection rules into multiple SIEM query languages (Splunk SPL, Elasticsearch Query DSL, Microsoft Sentinel KQL, CrowdStrike Falcon LogScale, IBM QRadar AQL, Google Chronicle YARA-L, Sumo Logic)."
 readme = "README.md"
 requires-python = ">=3.9"
