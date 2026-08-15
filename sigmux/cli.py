@@ -23,9 +23,9 @@ err_console = Console(stderr=True)
 # SIEM target still only means writing one new backends/*.py file.
 _TARGET_INFO = {
     "splunk": {"label": "Splunk SPL", "ext": "spl", "color": "orange3", "lexer": "text"},
-    "elasticsearch": {"label": "Elasticsearch Query DSL", "ext": "json", "color": "gold3", "lexer": "json"},
+    "elastic": {"label": "Elasticsearch Query DSL", "ext": "json", "color": "gold3", "lexer": "json"},
     "sentinel": {"label": "Microsoft Sentinel (KQL)", "ext": "kql", "color": "deep_sky_blue1", "lexer": "kql"},
-    "logscale": {"label": "CrowdStrike Falcon LogScale (LQL)", "ext": "lql", "color": "magenta1", "lexer": "text"},
+    "crowdstrike": {"label": "CrowdStrike Falcon LogScale (LQL)", "ext": "lql", "color": "magenta1", "lexer": "text"},
     "qradar": {"label": "IBM QRadar (AQL)", "ext": "aql", "color": "green3", "lexer": "sql"},
     "chronicle": {"label": "Google Chronicle (YARA-L 2.0)", "ext": "yaral", "color": "cyan1", "lexer": "yara"},
     "sumologic": {"label": "Sumo Logic search query", "ext": "sumo", "color": "red3", "lexer": "text"},

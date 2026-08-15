@@ -4,13 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigmux"
-version = "0.2.0"
+version = "0.3.0"
 description = "Convert Sigma detection rules into multiple SIEM query languages (Splunk SPL, Elasticsearch Query DSL, Microsoft Sentinel KQL, CrowdStrike Falcon LogScale, IBM QRadar AQL, Google Chronicle YARA-L, Sumo Logic)."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [{name = "Kyle Main"}]
-keywords = ["sigma", "siem", "detection-engineering", "splunk", "elasticsearch", "sentinel", "kql", "crowdstrike", "logscale", "qradar", "chronicle", "yara-l", "sumologic", "security"]
+keywords = ["sigma", "siem", "detection-engineering", "splunk", "elasticsearch", "sentinel", "kql", "crowdstrike", "logscale", "qradar", "chronicle", "yara-l", "sumologic", "security", "detectl"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
 dependencies = [
     "PyYAML>=6.0",
     "click>=8.0",
@@ -20,6 +32,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/kylemain/sigmux"
+Repository = "https://github.com/kylemain/sigmux"
+Issues = "https://github.com/kylemain/sigmux/issues"
 
 [project.scripts]
 sigmux = "sigmux.cli:main"

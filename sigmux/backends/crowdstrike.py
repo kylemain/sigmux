@@ -48,8 +48,8 @@ def _render(node: Node, top: bool = False) -> str:
     raise TypeError(f"Unknown node type: {type(node)!r}")
 
 
-class LogScaleBackend(Backend):
-    name = "logscale"
+class CrowdStrikeBackend(Backend):
+    name = "crowdstrike"
 
     def render(self, rule: "SigmaRule") -> str:
         return _render(rule.ast, top=True)

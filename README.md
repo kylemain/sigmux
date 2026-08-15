@@ -1,11 +1,16 @@
 # sigmux
 
 [![CI](https://github.com/kylemain/sigmux/actions/workflows/ci.yml/badge.svg)](https://github.com/kylemain/sigmux/actions/workflows/ci.yml)
+[![coverage](coverage.svg)](#testing)
 
 Convert [Sigma](https://github.com/SigmaHQ/sigma) detection rules into **seven** SIEM/XDR query languages from a single command: **Splunk SPL**, **Elasticsearch Query DSL**, **Microsoft Sentinel (KQL)**, **CrowdStrike Falcon LogScale (LQL)**, **IBM QRadar (AQL)**, **Google Chronicle (YARA-L 2.0)**, and **Sumo Logic**.
 
+This mirrors real multi-SIEM detection engineering work -- writing detection logic once and deploying it consistently across platforms instead of hand-porting query syntax every time a team adds a new SIEM. It pairs directly with [detectl](https://github.com/kylemain/detectl), which takes sigmux's output the rest of the way and actually pushes it to a live platform -- see [Pairs well with detectl](#pairs-well-with-detectl) below.
+
+![sigmux and detectl demo](demo.gif)
+
 ```
-$ sigmux convert examples/mimikatz_execution.yml --target splunk --target sentinel --target elasticsearch
+$ sigmux convert examples/mimikatz_execution.yml --target splunk --target sentinel --target elastic
 
 ╭─ Mimikatz Process Execution :: splunk (Splunk SPL) ──────────────────────────╮
 │ Image=*\mimikatz.exe OR (CommandLine=*sekurlsa::* OR CommandLine=*lsadump::* │
@@ -16,7 +21,7 @@ $ sigmux convert examples/mimikatz_execution.yml --target splunk --target sentin
 │ | where Image endswith "\mimikatz.exe" or (CommandLine has "sekurlsa::" or   │
 │ CommandLine has "lsadump::" or CommandLine has "privilege::debug")           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Mimikatz Process Execution :: elasticsearch (Elasticsearch Query DSL) ──────╮
+╭─ Mimikatz Process Execution :: elastic (Elasticsearch Query DSL) ────────────╮
 │ { "query": { "bool": { "should": [ ... ], "minimum_should_match": 1 } } }    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 3 conversion(s) across 1 rule(s), 0 error(s)
@@ -31,6 +36,8 @@ Detection engineering across more than one SIEM/EDR platform means writing (and 
 It's a generalized, from-scratch build — not a wrapper around an existing rule-conversion library — written to be small enough to read end to end in one sitting.
 
 ## Install
+
+Not published to PyPI yet -- `pyproject.toml` and `.github/workflows/publish.yml` are set up for it (PyPI Trusted Publishing, triggered on a version tag), but that needs a one-time manual step on pypi.org's side first. Until then, install from source:
 
 ```bash
 git clone https://github.com/kylemain/sigmux
@@ -47,29 +54,41 @@ pip install -e .
 sigmux convert examples/mimikatz_execution.yml
 
 # Convert to specific target(s) only
-sigmux convert examples/mimikatz_execution.yml --target splunk --target logscale
+sigmux convert examples/mimikatz_execution.yml --target splunk --target crowdstrike
 
 # Convert every rule in a directory, writing output files instead of stdout
-sigmux convert examples/ --target elasticsearch --out out/
+sigmux convert examples/ --target elastic --out out/
 
 # List supported targets, their query language, and output extension
 sigmux targets
 ```
 
 ```
-                    sigmux conversion targets
-┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
-┃ Target        ┃ Query language                    ┃ Output ext ┃
-┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
-│ chronicle     │ Google Chronicle (YARA-L 2.0)     │   .yaral   │
-│ elasticsearch │ Elasticsearch Query DSL           │   .json    │
-│ logscale      │ CrowdStrike Falcon LogScale (LQL) │    .lql    │
-│ qradar        │ IBM QRadar (AQL)                  │    .aql    │
-│ sentinel      │ Microsoft Sentinel (KQL)          │    .kql    │
-│ splunk        │ Splunk SPL                        │    .spl    │
-│ sumologic     │ Sumo Logic search query           │   .sumo    │
-└───────────────┴───────────────────────────────────┴────────────┘
+                   sigmux conversion targets
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Target      ┃ Query language                    ┃ Output ext ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ chronicle   │ Google Chronicle (YARA-L 2.0)     │   .yaral   │
+│ crowdstrike │ CrowdStrike Falcon LogScale (LQL) │    .lql    │
+│ elastic     │ Elasticsearch Query DSL           │   .json    │
+│ qradar      │ IBM QRadar (AQL)                  │    .aql    │
+│ sentinel    │ Microsoft Sentinel (KQL)          │    .kql    │
+│ splunk      │ Splunk SPL                        │    .spl    │
+│ sumologic   │ Sumo Logic search query           │   .sumo    │
+└─────────────┴───────────────────────────────────┴────────────┘
 ```
+
+## Pairs well with [detectl](https://github.com/kylemain/detectl)
+
+sigmux's target names match detectl's platform names 1:1 on purpose (`elastic`, `crowdstrike`, `sentinel`, `splunk`, `qradar`, `sumologic`, `chronicle`) -- the conversion target and the platform you push it to are never something you have to look up a mapping for.
+
+detectl imports sigmux as a library to collapse the two-step "convert, then paste the output into a create command" workflow into one:
+
+```bash
+detectl -p elastic rules create-from-sigma my_rule.yml
+```
+
+That single command parses the Sigma rule, converts it with sigmux using the exact target that matches `--platform`, and creates it as a live detection rule -- with a `--dry-run` flag that shows the full converted query and rule metadata (Terraform-plan style) before anything is actually created. This isn't just a documented pairing either: a separate `integration` CI job in detectl spins up a real Elasticsearch and runs this exact pipeline against it end to end (see detectl's `scripts/integration_test_elastic.py`), so the two projects staying compatible is something CI actually checks, not just a README claim.
 
 ## Architecture
 
@@ -97,12 +116,28 @@ class MyBackend(Backend):
 
 This is a deliberately-scoped implementation of Sigma's *field matching and boolean logic*, not the full spec:
 
-- Supported field modifiers: exact match (with automatic wildcard inference), `contains`, `startswith`, `endswith`, `re`. Not supported: `base64`, `base64offset`, `cidr`, field-to-field comparisons.
-- Supported condition forms: `and` / `or` / `not`, parentheses, `1 of <glob>`, `all of <glob>`, `1 of them`, `all of them`. Not supported: aggregation/timeframe rules (`count() by ... > N`).
+- Supported field modifiers: exact match (with automatic wildcard inference), `contains`, `startswith`, `endswith`, `re`. `base64`, `base64offset`, `cidr`, and field-to-field comparisons aren't supported -- rather than rejecting the whole rule, an unsupported modifier degrades to a plain exact-match on the raw field value, so the rule still converts (just not perfectly; don't rely on it decoding base64 or matching a CIDR range for you).
+- Supported condition forms: `and` / `or` / `not`, parentheses, `1 of <glob>`, `all of <glob>`, `1 of them`, `all of them`. Not supported: aggregation/timeframe rules (`count() by ... > N`) and the newer multi-rule `correlation:` type.
 - The Sentinel backend's logsource → table mapping, and the Chronicle backend's logsource → UDM `event_type` mapping, cover the common Sigma categories/products out of the box; anything more specific should be overridden per deployment.
 - The `re` modifier's Splunk and Sumo Logic rendering is a best-effort placeholder — neither SPL nor Sumo's search syntax has an inline regex match operator, so the emitted term is flagged with a comment showing the equivalent pipe stage (`| regex` / `| where ... matches`).
 - The QRadar backend emits raw Sigma field names, not real AQL property names or a QID map, and doesn't add a `LAST <n> <unit>` time-window clause — both are deployment-specific.
 - The Chronicle backend emits raw Sigma field names under the event variable (`$e.Image`) rather than mapping them onto Chronicle's UDM schema (`$e.target.process.file.full_path`, ...) — that mapping is log-source-specific and out of scope here.
+
+## SigmaHQ compatibility
+
+The 9 example rules in this repo prove the mechanics work; they don't prove much about coverage. `scripts/benchmark_sigmahq.py` runs every rule in the real, actively-maintained [SigmaHQ/sigma](https://github.com/SigmaHQ/sigma) `rules/` corpus (rules this project doesn't own or control) through every sigmux backend and reports how many convert cleanly:
+
+```bash
+python scripts/benchmark_sigmahq.py
+```
+
+As of this writing, against the current `rules/` corpus:
+
+```
+3141/3141 rules converted cleanly to all 7 targets (100.0%)
+```
+
+Read that number for what it actually measures, not more: it means every rule parsed and every backend rendered *something* without raising -- it doesn't mean every rendered query is semantically perfect. 28 of those 3,141 rules use `base64`/`cidr` modifiers, which (per Known limitations above) sigmux intentionally degrades to a plain exact-match rather than rejecting; this snapshot of the corpus also happens to contain zero aggregation/`correlation:` rules, which remain genuinely unsupported and would fail if present. This job runs weekly in CI (informational only, not a merge gate, since it depends on an external repo's content) -- see the `sigmahq-benchmark` job in `.github/workflows/ci.yml`.
 
 ## Testing
 

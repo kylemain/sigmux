@@ -1,0 +1,41 @@
+name: Publish to PyPI
+
+# Fires on a version tag (e.g. `git tag v0.3.0 && git push --tags`). Uses
+# PyPI Trusted Publishing (OIDC) -- no API token stored in this repo. That
+# needs a one-time, manual setup on pypi.org that only the project owner
+# can do (create the `sigmux` project, add this repo/workflow as a trusted
+# publisher under its Publishing settings) before the first tag push will
+# actually succeed; until then this workflow exists but has nothing to
+# authenticate against.
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # required for PyPI Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

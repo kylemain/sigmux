@@ -1,8 +1,14 @@
-"""Backend registry: maps a target name to its converter implementation."""
+"""Backend registry: maps a target name to its converter implementation.
+
+Target names match detectl's platform names 1:1 (elastic, crowdstrike,
+sentinel, splunk, qradar, sumologic, chronicle) -- deliberately, so a
+sigmux target and the detectl platform you'd push its output to are always
+the same name. See "Pairs well with detectl" in the README.
+"""
 from .base import Backend
 from .chronicle import ChronicleBackend
-from .elasticsearch import ElasticsearchBackend
-from .logscale import LogScaleBackend
+from .crowdstrike import CrowdStrikeBackend
+from .elastic import ElasticBackend
 from .qradar import QRadarBackend
 from .sentinel import SentinelBackend
 from .splunk import SplunkBackend
@@ -10,9 +16,9 @@ from .sumologic import SumoLogicBackend
 
 REGISTRY = {
     "splunk": SplunkBackend(),
-    "elasticsearch": ElasticsearchBackend(),
+    "elastic": ElasticBackend(),
     "sentinel": SentinelBackend(),
-    "logscale": LogScaleBackend(),
+    "crowdstrike": CrowdStrikeBackend(),
     "qradar": QRadarBackend(),
     "chronicle": ChronicleBackend(),
     "sumologic": SumoLogicBackend(),

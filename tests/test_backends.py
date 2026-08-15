@@ -34,10 +34,10 @@ class TestSplunkBackend(unittest.TestCase):
         self.assertIn('CommandLine=*-enc*', out)
 
 
-class TestElasticsearchBackend(unittest.TestCase):
+class TestElasticBackend(unittest.TestCase):
     def setUp(self):
         self.rule = SigmaRule.from_yaml(RULE_TEXT)
-        self.backend = get_backend("elasticsearch")
+        self.backend = get_backend("elastic")
 
     def test_renders_valid_json_bool_query(self):
         out = self.backend.render(self.rule)
@@ -74,10 +74,10 @@ class TestSentinelBackend(unittest.TestCase):
         self.assertTrue(out.startswith("SecurityEvent\n"))
 
 
-class TestLogScaleBackend(unittest.TestCase):
+class TestCrowdStrikeBackend(unittest.TestCase):
     def setUp(self):
         self.rule = SigmaRule.from_yaml(RULE_TEXT)
-        self.backend = get_backend("logscale")
+        self.backend = get_backend("crowdstrike")
 
     def test_renders_and_or_not(self):
         out = self.backend.render(self.rule)

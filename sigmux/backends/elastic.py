@@ -42,8 +42,8 @@ def _render(node: Node) -> Dict[str, Any]:
     raise TypeError(f"Unknown node type: {type(node)!r}")
 
 
-class ElasticsearchBackend(Backend):
-    name = "elasticsearch"
+class ElasticBackend(Backend):
+    name = "elastic"
 
     def render(self, rule: "SigmaRule") -> str:
         return json.dumps({"query": _render(rule.ast)}, indent=2)

@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"  # weekly, since the corpus benchmark job below tracks an external repo
+  workflow_dispatch:
 
 jobs:
   test:
@@ -23,3 +26,60 @@ jobs:
         run: python -m unittest discover -v
       - name: Smoke-test the CLI against the example rules
         run: sigmux convert examples
+
+  coverage-badge:
+    # Self-hosted: no third-party badge service or account, just
+    # coverage's own --format=total piped into scripts/generate_coverage_badge.py
+    # (see that script for why not the coverage-badge package). Commits the
+    # regenerated SVG back to main only if it actually changed.
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          pip install -e .
+          pip install coverage
+      - name: Measure coverage and render badge
+        run: |
+          coverage run -m unittest discover
+          python scripts/generate_coverage_badge.py
+      - name: Commit badge if changed
+        run: |
+          if ! git diff --quiet -- coverage.svg; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add coverage.svg
+            git commit -m "Update coverage badge [skip ci]"
+            git push
+          else
+            echo "coverage.svg unchanged, nothing to commit"
+          fi
+
+  sigmahq-benchmark:
+    # Informational, not a merge gate: tracks how sigmux holds up against
+    # SigmaHQ's real, actively-maintained rule corpus (thousands of rules
+    # this project doesn't own or control) as a much stronger signal than
+    # the 9 example rules in this repo. See scripts/benchmark_sigmahq.py
+    # and the README's "SigmaHQ compatibility" section.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .
+      - name: Run SigmaHQ corpus benchmark
+        run: python scripts/benchmark_sigmahq.py --json sigmahq-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sigmahq-benchmark-report
+          path: sigmahq-report.json

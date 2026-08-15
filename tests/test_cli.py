@@ -15,7 +15,7 @@ class TestCli(unittest.TestCase):
     def test_targets_lists_all_backends(self):
         result = self.runner.invoke(main, ["targets"])
         self.assertEqual(result.exit_code, 0)
-        for name in ("elasticsearch", "sentinel", "splunk", "logscale", "qradar", "chronicle", "sumologic"):
+        for name in ("elastic", "sentinel", "splunk", "crowdstrike", "qradar", "chronicle", "sumologic"):
             self.assertIn(name, result.output)
 
     def test_convert_single_rule_all_targets(self):
@@ -23,9 +23,9 @@ class TestCli(unittest.TestCase):
         result = self.runner.invoke(main, ["convert", str(rule_path)])
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("splunk", result.output)
-        self.assertIn("elasticsearch", result.output)
+        self.assertIn("elastic", result.output)
         self.assertIn("sentinel", result.output)
-        self.assertIn("logscale", result.output)
+        self.assertIn("crowdstrike", result.output)
         self.assertIn("qradar", result.output)
         self.assertIn("chronicle", result.output)
         self.assertIn("sumologic", result.output)
@@ -55,9 +55,9 @@ class TestCli(unittest.TestCase):
             )
             self.assertEqual(result.exit_code, 0, result.output)
             self.assertEqual(len(list(Path("out").glob("*.splunk.spl"))), 9)
-            self.assertEqual(len(list(Path("out").glob("*.elasticsearch.json"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.elastic.json"))), 9)
             self.assertEqual(len(list(Path("out").glob("*.sentinel.kql"))), 9)
-            self.assertEqual(len(list(Path("out").glob("*.logscale.lql"))), 9)
+            self.assertEqual(len(list(Path("out").glob("*.crowdstrike.lql"))), 9)
             self.assertEqual(len(list(Path("out").glob("*.qradar.aql"))), 9)
             self.assertEqual(len(list(Path("out").glob("*.chronicle.yaral"))), 9)
             self.assertEqual(len(list(Path("out").glob("*.sumologic.sumo"))), 9)
