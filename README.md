@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/kylemain/sigmux/actions/workflows/ci.yml/badge.svg)](https://github.com/kylemain/sigmux/actions/workflows/ci.yml)
 [![coverage](coverage.svg)](#testing)
+[![PyPI](https://img.shields.io/pypi/v/sigmux)](https://pypi.org/project/sigmux/)
 
 Convert [Sigma](https://github.com/SigmaHQ/sigma) detection rules into **seven** SIEM/XDR query languages from a single command: **Splunk SPL**, **Elasticsearch Query DSL**, **Microsoft Sentinel (KQL)**, **CrowdStrike Falcon LogScale (LQL)**, **IBM QRadar (AQL)**, **Google Chronicle (YARA-L 2.0)**, and **Sumo Logic**.
 
@@ -37,7 +38,19 @@ It's a generalized, from-scratch build — not a wrapper around an existing rule
 
 ## Install
 
-Not published to PyPI yet -- `pyproject.toml` and `.github/workflows/publish.yml` are set up for it (PyPI Trusted Publishing, triggered on a version tag), but that needs a one-time manual step on pypi.org's side first. Until then, install from source:
+Published on PyPI. In a fresh terminal, with no prior setup:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install sigmux
+```
+
+(`pip install sigmux` alone -- outside a venv -- will likely be refused on a modern Mac; recent Python installs block bare system-wide installs on purpose. The two lines above sidestep that.)
+
+Prefer [pipx](https://pipx.pypa.io) for a CLI tool like this and don't want to think about venvs at all: `pipx install sigmux`.
+
+The Usage examples below reference files under `examples/`, so to run them verbatim (rather than pointing sigmux at a Sigma rule of your own), clone the repo instead and install in editable mode:
 
 ```bash
 git clone https://github.com/kylemain/sigmux
@@ -82,10 +95,12 @@ sigmux targets
 
 sigmux's target names match detectl's platform names 1:1 on purpose (`elastic`, `crowdstrike`, `sentinel`, `splunk`, `qradar`, `sumologic`, `chronicle`) -- the conversion target and the platform you push it to are never something you have to look up a mapping for.
 
-detectl imports sigmux as a library to collapse the two-step "convert, then paste the output into a create command" workflow into one:
+detectl imports sigmux as a library to collapse the two-step "convert, then paste the output into a create command" workflow into one -- try it (no credentials needed with `--dry-run`):
 
 ```bash
-detectl -p elastic rules create-from-sigma my_rule.yml
+pip install "detectl[sigma,dryrun]"
+curl -o mimikatz.yml https://raw.githubusercontent.com/kylemain/sigmux/main/examples/mimikatz_execution.yml
+detectl -p elastic rules create-from-sigma mimikatz.yml --dry-run
 ```
 
 That single command parses the Sigma rule, converts it with sigmux using the exact target that matches `--platform`, and creates it as a live detection rule -- with a `--dry-run` flag that shows the full converted query and rule metadata (Terraform-plan style) before anything is actually created. This isn't just a documented pairing either: a separate `integration` CI job in detectl spins up a real Elasticsearch and runs this exact pipeline against it end to end (see detectl's `scripts/integration_test_elastic.py`), so the two projects staying compatible is something CI actually checks, not just a README claim.
