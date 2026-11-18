@@ -7,7 +7,7 @@ name = "sigmux"
 version = "0.3.1"
 description = "Convert Sigma detection rules into multiple SIEM query languages (Splunk SPL, Elasticsearch Query DSL, Microsoft Sentinel KQL, CrowdStrike Falcon LogScale, IBM QRadar AQL, Google Chronicle YARA-L, Sumo Logic)."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [{name = "Kyle Main"}]
 keywords = ["sigma", "siem", "detection-engineering", "splunk", "elasticsearch", "sentinel", "kql", "crowdstrike", "logscale", "qradar", "chronicle", "yara-l", "sumologic", "security", "detectl"]
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Information Technology",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
