@@ -149,10 +149,10 @@ python scripts/benchmark_sigmahq.py
 As of this writing, against the current `rules/` corpus:
 
 ```
-3141/3141 rules converted cleanly to all 7 targets (100.0%)
+3164/3164 rules converted cleanly to all 7 targets (100.0%)
 ```
 
-Read that number for what it actually measures, not more: it means every rule parsed and every backend rendered *something* without raising -- it doesn't mean every rendered query is semantically perfect. 28 of those 3,141 rules use `base64`/`cidr` modifiers, which (per Known limitations above) sigmux intentionally degrades to a plain exact-match rather than rejecting; this snapshot of the corpus also happens to contain zero aggregation/`correlation:` rules, which remain genuinely unsupported and would fail if present. This job runs weekly in CI (informational only, not a merge gate, since it depends on an external repo's content) -- see the `sigmahq-benchmark` job in `.github/workflows/ci.yml`.
+Read that number for what it actually measures, not more: it means every rule parsed and every backend rendered *something* without raising -- it doesn't mean every rendered query is semantically perfect. 28 of those 3,164 rules use `base64`/`cidr` modifiers, which (per Known limitations above) sigmux intentionally degrades to a plain exact-match rather than rejecting; this snapshot of the corpus also happens to contain zero aggregation/`correlation:` rules, which remain genuinely unsupported and would fail if present. This job runs weekly in CI (informational only, not a merge gate, since it depends on an external repo's content) -- see the `sigmahq-benchmark` job in `.github/workflows/ci.yml`.
 
 ## Testing
 
